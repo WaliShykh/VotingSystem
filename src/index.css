@@ -384,7 +384,7 @@ layer(base);
   @apply w-full;
 }
 .flatpickr-calendar {
-  @apply mt-2 bg-white! rounded-xl! p-5! border! border-gray-200! text-gray-500! dark:bg-gray-dark! dark:text-gray-400! dark:shadow-theme-xl! 2xsm:w-auto!;
+  @apply mt-2 bg-white! rounded-xl! p-5! border! border-gray-200! text-gray-500! dark:bg-dark-bg! dark:text-gray-400! dark:shadow-theme-xl! 2xsm:w-auto!;
 }
 
 .flatpickr-months .flatpickr-prev-month:hover svg,
@@ -433,7 +433,7 @@ layer(base);
   appearance: none;
   background-image: none !important;
   font-weight: 500;
-  @apply dark:text-white/90! dark:bg-gray-dark!;
+  @apply dark:text-white/90! dark:bg-dark-bg!;
 }
 .flatpickr-month
   .flatpickr-current-month
