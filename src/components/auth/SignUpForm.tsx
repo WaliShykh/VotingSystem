@@ -26,7 +26,6 @@ export default function SignUpForm() {
       lname: "",
       email: "",
       country: "",
-      cnic: "",
       password: "",
       confirmPassword: "",
       dateOfBirth: "",
@@ -40,12 +39,6 @@ export default function SignUpForm() {
         .email("Invalid email format")
         .required("Email is required"),
       country: Yup.string().required("Country is required"),
-      cnic: Yup.string()
-        .matches(
-          /^\d{13}$/,
-          "CNIC must be exactly 13 digits and no characters."
-        )
-        .required("CNIC is required"),
       password: Yup.string()
         .min(8, "Password must be at least 8 characters")
         .matches(/[A-Z]/, "Must contain at least one uppercase letter")
@@ -151,18 +144,6 @@ export default function SignUpForm() {
                 </p>
               )}
             </div>
-          </div>
-
-          <div>
-            <Label>CNIC</Label>
-            <Input
-              {...formik.getFieldProps("cnic")}
-              maxLength={13}
-              placeholder="Enter your CNIC"
-            />
-            {formik.touched.cnic && formik.errors.cnic && (
-              <p className="text-red-500 text-sm">{formik.errors.cnic}</p>
-            )}
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">

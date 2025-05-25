@@ -16,17 +16,10 @@ export default function SignInForm() {
 
   const formik = useFormik({
     initialValues: {
-      cnic: "",
       email: "",
       password: "",
     },
     validationSchema: Yup.object({
-      cnic: Yup.string()
-        .matches(
-          /^\d{13}$/,
-          "CNIC must be exactly 13 digits and no characters."
-        )
-        .required("CNIC is required"),
       email: Yup.string()
         .email("Invalid email address")
         .required("Email is required"),
@@ -67,25 +60,6 @@ export default function SignInForm() {
           <div>
             <form onSubmit={formik.handleSubmit}>
               <div className="space-y-6">
-                <div>
-                  <Label>
-                    CNIC <span className="text-error-500">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    name="cnic"
-                    placeholder="1234567890123"
-                    maxLength={13}
-                    value={formik.values.cnic}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                  />
-                  {formik.touched.cnic && formik.errors.cnic ? (
-                    <p className="text-error-500 text-sm">
-                      {formik.errors.cnic}
-                    </p>
-                  ) : null}
-                </div>
                 <div>
                   <Label>
                     Email <span className="text-error-500">*</span>
