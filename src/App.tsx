@@ -10,7 +10,7 @@ import MyElections from "./pages/MyElections";
 import ViewResults from "./pages/ViewResults";
 import Home from "./pages/Dashboard/Home";
 import CastVote from "./pages/CastVote";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function App() {
   return (

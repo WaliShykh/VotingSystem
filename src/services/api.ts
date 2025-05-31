@@ -50,6 +50,7 @@ export const authAPI = {
     const response = await api.post<LoginResponse>("/auth/login", {
       email,
       password,
+      portal: "user",
     });
     if (response.data.token) {
       localStorage.setItem("token", response.data.token);

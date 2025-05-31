@@ -176,8 +176,7 @@ export default function MyElections() {
                     <Button size="sm" variant="outline" disabled>
                       Unavailable
                     </Button>
-                  ) : item.status === "announced" ||
-                    item.status === "missed" ? (
+                  ) : item.status === "voted" || item.status === "missed" ? (
                     <Button
                       size="sm"
                       variant="outline"

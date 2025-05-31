@@ -1,25 +1,101 @@
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import { useState, useEffect } from "react";
-import { candidates, generateMonthlyData } from "../data/candidates";
+import { useParams } from "react-router-dom";
+
+interface Candidate {
+  name: string;
+  votesSecured: number;
+  percentage: number;
+  status: string;
+}
+
+interface ElectionResults {
+  election: {
+    id: string;
+    name: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+    totalVotesCast: number;
+  };
+  candidates: Candidate[];
+}
 
 export default function StatisticsChart() {
+  const { id } = useParams<{ id: string }>();
   const [chartData, setChartData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Get token from localStorage
+
+      if (!token) {
+        console.error("No authentication token found");
+        setLoading(false);
+        return;
+      }
+
+      if (!id) {
+        console.error("No election ID found");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5174/api/results/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: ElectionResults = await response.json();
+
+      // Sort candidates by votes and take top 5
+      const topCandidates = [...data.candidates]
+        .sort((a, b) => b.votesSecured - a.votesSecured)
+        .slice(0, 5);
+
+      const seriesData = [
+        {
+          name: "Votes",
+          data: topCandidates.map((candidate) => ({
+            x: candidate.name,
+            y: candidate.votesSecured,
+          })),
+        },
+      ];
+
+      setChartData(seriesData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching election results:", error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = () => {
-      const monthlyData = generateMonthlyData(candidates);
-      setChartData(monthlyData);
-    };
-
+    // Initial fetch
     fetchData();
-  }, []);
+
+    // Set up polling every 5 seconds
+    const interval = setInterval(fetchData, 5000);
+
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, [id]);
 
   const options: ApexOptions = {
     legend: {
       show: false,
     },
     colors: [
+      "#4F46E5",
       "#4F46E5",
       "#14B8A6",
       "#EF4444",
@@ -38,82 +114,29 @@ export default function StatisticsChart() {
     chart: {
       fontFamily: "Outfit, sans-serif",
       height: 310,
-      type: "area",
+      type: "bar",
       toolbar: {
         show: false,
       },
     },
-    stroke: {
-      curve: "smooth",
-      width: [2, 2],
-    },
-    fill: {
-      type: "gradient",
-      gradient: {
-        opacityFrom: 0.55,
-        opacityTo: 0,
-      },
-    },
-    markers: {
-      size: 4,
-      strokeColors: "#fff",
-      strokeWidth: 2,
-      hover: {
-        size: 6,
-      },
-    },
-    grid: {
-      xaxis: {
-        lines: {
-          show: false,
-        },
-      },
-      yaxis: {
-        lines: {
-          show: true,
-        },
+    plotOptions: {
+      bar: {
+        borderRadius: 4,
+        horizontal: true,
       },
     },
     dataLabels: {
-      enabled: false,
-    },
-    tooltip: {
       enabled: true,
-      y: {
-        formatter: function (val) {
-          return val.toLocaleString() + " votes";
-        },
+      formatter: function (val) {
+        return val + " votes";
+      },
+      style: {
+        fontSize: "12px",
+        colors: ["#fff"],
       },
     },
     xaxis: {
-      title: {
-        text: "Vote Count",
-        style: {
-          fontSize: "14px",
-          fontWeight: 500,
-        },
-      },
-
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
-      tooltip: {
-        enabled: true,
-      },
-    },
-    yaxis: {
-      labels: {
-        style: {
-          fontSize: "12px",
-          colors: ["#6B7280"],
-        },
-        formatter: function (val) {
-          return val.toLocaleString();
-        },
-      },
+      categories: chartData[0]?.data.map((item: any) => item.x) || [],
       title: {
         text: "Votes",
         style: {
@@ -121,14 +144,33 @@ export default function StatisticsChart() {
           fontWeight: 500,
         },
       },
-      axisBorder: {
-        show: false,
+      min: 0,
+      max:
+        chartData[0]?.data.reduce(
+          (max: number, item: any) => Math.max(max, item.y),
+          0
+        ) * 1.4,
+      tickAmount: 5,
+      labels: {
+        formatter: (value: string) => {
+          return Math.round(Number(value)).toString();
+        },
       },
-      axisTicks: {
-        show: false,
+    },
+    yaxis: {
+      title: {
+        text: "Candidates",
+        style: {
+          fontSize: "14px",
+          fontWeight: 500,
+        },
       },
-      tooltip: {
-        enabled: true,
+    },
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return val + " votes";
+        },
       },
     },
   };
@@ -148,11 +190,11 @@ export default function StatisticsChart() {
 
       <div className="max-w-full">
         <div className="min-w-full">
-          {chartData.length > 0 ? (
+          {!loading && chartData.length > 0 ? (
             <Chart
               options={options}
               series={chartData}
-              type="area"
+              type="bar"
               height={310}
             />
           ) : (

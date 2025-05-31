@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import WinnerCard from "./components/WinnerCard";
-import RunnerUpCard from "./components/RunnerUpCard";
 import VoteDistributionChart from "./components/DonutChart";
 import BasicTables from "./components/BasicTables";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
@@ -173,24 +172,21 @@ const ViewResults = () => {
           votePercentage={`${results.winner.winningPercentage}%`}
         />
         <div className="grid grid-cols-1 gap-y-4">
-          <RunnerUpCard
-            candidateName={results.runnerUp.name}
-            position="2nd"
-            party={results.runnerUp.party}
-            totalVotes={results.runnerUp.votesSecured.toString()}
-            Badgecolor="info"
-            votePercentage={`${results.runnerUp.percentage}%`}
-          />
-          {results.candidates.length > 2 && (
-            <RunnerUpCard
-              candidateName={results.candidates[2].name}
-              position="3rd"
-              party={results.candidates[2].party}
-              totalVotes={results.candidates[2].votesSecured.toString()}
-              Badgecolor="warning"
-              votePercentage={`${results.candidates[2].percentage}%`}
+          {
+            <WinnerCard
+              candidateName={results.runnerUp.name}
+              party={results.runnerUp.party}
+              country="Pakistan"
+              position="2nd"
+              Badgecolor="info"
+              positionWon="Runner-Up"
+              electionDate={new Date(
+                results.election.endDate
+              ).toLocaleDateString()}
+              totalVotes={results.runnerUp.votesSecured.toString()}
+              votePercentage={`${results.runnerUp.percentage}%`}
             />
-          )}
+          }
         </div>
         <VoteDistributionChart
           candidates={results.candidates.map((candidate) => ({

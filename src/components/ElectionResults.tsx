@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useSocket } from "../hooks/useSocket";
 
 interface ElectionResultsProps {
   electionId: string;
@@ -19,28 +18,41 @@ const ElectionResults: React.FC<ElectionResultsProps> = ({
   const [status, setStatus] = useState<string>("");
   const [results, setResults] = useState<CandidateVotes[]>([]);
 
-  const { getLiveResults } = useSocket({
-    token,
-    electionId,
-    onElectionData: (data) => {
-      setVoteCount(data.voteCount);
-      setStatus(data.status);
-    },
-    onVoteUpdate: (data) => {
+  const fetchResults = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5174/api/vote/results/${electionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch results");
+      }
+
+      const data = await response.json();
       setVoteCount(data.totalVotes);
-    },
-    onElectionStatus: (data) => {
       setStatus(data.status);
-    },
-    onLiveResults: (data) => {
       setResults(data.results);
-    },
-  });
+    } catch (error) {
+      console.error("Error fetching results:", error);
+    }
+  };
 
   useEffect(() => {
-    // Request live results when component mounts
-    getLiveResults(electionId);
-  }, [electionId, getLiveResults]);
+    // Initial fetch
+    fetchResults();
+
+    // Set up polling every 5 seconds
+    const interval = setInterval(fetchResults, 5000);
+
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, [electionId, token]);
 
   return (
     <div className="p-4">

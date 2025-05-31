@@ -8,6 +8,7 @@ import Input from "../form/input/InputField";
 import Checkbox from "../common/Checkbox";
 import Button from "../ui/button/Button";
 import { toast } from "react-toastify";
+import { authAPI } from "../../services/api";
 
 export default function SignInForm() {
   const navigate = useNavigate();
@@ -32,10 +33,10 @@ export default function SignInForm() {
     }),
     validateOnChange: true,
     validateOnBlur: true,
-    onSubmit: async () => {
+    onSubmit: async (values) => {
       try {
         setLoading(true);
-        // const response = await authAPI.login(values.email, values.password);
+        const response = await authAPI.login(values.email, values.password);
         toast.success("Login successful!", {
           position: "top-right",
           autoClose: 3000,
