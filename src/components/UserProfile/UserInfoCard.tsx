@@ -3,13 +3,186 @@ import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import { useEffect, useState } from "react";
+
+interface UserData {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dob: string;
+  country: string;
+  gender: string;
+  role: string;
+  agreedToTerms: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PasswordUpdateData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const handleSave = () => {
-    console.log("Saving changes...");
-    closeModal();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [passwordData, setPasswordData] = useState<PasswordUpdateData>({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+
+        const response = await fetch("http://localhost:5174/api/me/", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Authentication failed. Please login again.");
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to fetch user data"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
+
+  const handleSave = async () => {
+    try {
+      setUpdateError(null);
+      setUpdateSuccess(false);
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setUpdateError("New passwords don't match");
+        return;
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        setUpdateError("New password must be at least 6 characters long");
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(
+        "http://localhost:5174/api/me/change-password",
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(passwordData),
+        }
+      );
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to update password");
+        } else {
+          throw new Error(`Server error: ${response.status}`);
+        }
+      }
+
+      setUpdateSuccess(true);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        closeModal();
+        setUpdateSuccess(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Password update error:", error);
+      setUpdateError(
+        error instanceof Error ? error.message : "Failed to update password"
+      );
+    }
+  };
+
+  if (loading) {
+    return <div className="p-5">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-5">
+        <div className="text-red-500 mb-4">Error: {error}</div>
+        {error.includes("Authentication failed") && (
+          <button
+            onClick={() => (window.location.href = "/login")}
+            className="text-blue-500 hover:text-blue-700 underline"
+          >
+            Go to Login
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return <div className="p-5">No user data available</div>;
+  }
+
+  // Format date safely
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Invalid Date";
+      }
+      return date.toLocaleDateString();
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid Date";
+    }
+  };
+
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -20,7 +193,7 @@ export default function UserInfoCard() {
                 First Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Wali
+                {userData.firstName || "Not provided"}
               </p>
             </div>
 
@@ -29,7 +202,7 @@ export default function UserInfoCard() {
                 Last Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Ahmad
+                {userData.lastName || "Not provided"}
               </p>
             </div>
 
@@ -38,7 +211,7 @@ export default function UserInfoCard() {
                 Email address
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                walishykh@gmail.com
+                {userData.email || "Not provided"}
               </p>
             </div>
 
@@ -47,7 +220,7 @@ export default function UserInfoCard() {
                 Country
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Pakistan
+                {userData.country || "Not provided"}
               </p>
             </div>
 
@@ -56,7 +229,16 @@ export default function UserInfoCard() {
                 Gender
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Male
+                {userData.gender || "Not provided"}
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Date of Birth
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {formatDate(userData.dob)}
               </p>
             </div>
           </div>
@@ -80,30 +262,77 @@ export default function UserInfoCard() {
               fill=""
             />
           </svg>
-          Edit
+          Change Password
         </button>
       </div>
 
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[500px] m-4">
         <div className="no-scrollbar relative w-full max-w-[500px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14"></div>
-          <form className="flex flex-col">
-            <div className="custom-scrollbar h-[180px] overflow-y-auto px-2 pb-3">
+          <form
+            className="flex flex-col"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSave();
+            }}
+          >
+            <div className="custom-scrollbar overflow-y-auto px-2 pb-3">
               <div className="mt-7">
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
-                  Email Information
+                  Change Password
                 </h5>
 
-                <Label>Email Address</Label>
-                <Input type="text" value="randomuser@pimjo.com" />
+                {updateError && (
+                  <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 rounded-lg">
+                    {updateError}
+                  </div>
+                )}
+
+                {updateSuccess && (
+                  <div className="mb-4 p-3 text-sm text-green-500 bg-green-50 rounded-lg">
+                    Password updated successfully!
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <Label>Current Password</Label>
+                    <Input
+                      type="password"
+                      name="currentPassword"
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>New Password</Label>
+                    <Input
+                      type="password"
+                      name="newPassword"
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Confirm New Password</Label>
+                    <Input
+                      type="password"
+                      name="confirmPassword"
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal}>
-                Close
+                Cancel
               </Button>
-              <Button size="sm" onClick={handleSave}>
-                Save Changes
+              <Button size="sm" type="submit">
+                Update Password
               </Button>
             </div>
           </form>

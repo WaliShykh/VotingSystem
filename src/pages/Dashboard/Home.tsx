@@ -1,7 +1,6 @@
 import EcommerceMetrics from "./components/EcommerceMetrics";
 import PageMeta from "../../components/common/PageMeta";
 import MyElections from "./components/MyElections";
-import ElectionResults from "./components/ElectionResults";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 
 export default function Home() {
@@ -23,7 +22,7 @@ export default function Home() {
           <EcommerceMetrics />
         </div>
         <MyElections />
-        <ElectionResults />
+        {/* <ElectionResults /> */}
       </div>
     </>
   );

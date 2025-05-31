@@ -12,29 +12,29 @@ import Button from "../ui/button/Button";
 import { countriesName, gender } from "../../utils/constants";
 import Flatpickr from "react-flatpickr";
 import { toast } from "react-toastify";
+import { authAPI } from "../../services/api";
 
 export default function SignUpForm() {
-  const Navigate = useNavigate();
-
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const formik = useFormik({
     initialValues: {
-      fname: "",
-      lname: "",
+      firstName: "",
+      lastName: "",
       email: "",
       country: "",
       password: "",
       confirmPassword: "",
-      dateOfBirth: "",
+      dob: "",
       agreeToTerms: false,
       gender: "",
     },
     validationSchema: Yup.object({
-      fname: Yup.string().required("First Name is required"),
-      lname: Yup.string().required("Last Name is required"),
+      firstName: Yup.string().required("First Name is required"),
+      lastName: Yup.string().required("Last Name is required"),
       email: Yup.string()
         .email("Invalid email format")
         .required("Email is required"),
@@ -48,7 +48,7 @@ export default function SignUpForm() {
       confirmPassword: Yup.string()
         .oneOf([Yup.ref("password")], "Passwords must match")
         .required("Confirm Password is required"),
-      dateOfBirth: Yup.string()
+      dob: Yup.string()
         .required("Date of Birth is required")
         .test("is-18+", "You must be at least 18 years old", (value) => {
           if (!value) return false;
@@ -59,23 +59,54 @@ export default function SignUpForm() {
         .oneOf([true], "You must agree to the Terms and Conditions")
         .required("You must agree to the Terms and Conditions"),
     }),
-    onSubmit: (values) => {
-      toast.success("Verification Email sent", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: false,
-        progress: undefined,
-        theme: "light",
-      });
-      setLoading(true);
-      setTimeout(() => {
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+        await authAPI.register({
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          country: values.country,
+          dob: values.dob,
+          gender: values.gender,
+          password: values.password,
+          confirmPassword: values.confirmPassword,
+          agreedToTerms: values.agreeToTerms,
+        });
+
+        toast.success(
+          "Registration successful! Please check your email for verification.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: false,
+            progress: undefined,
+            theme: "light",
+          }
+        );
+
+        navigate("/signin");
+      } catch (error: any) {
+        toast.error(
+          error.response?.data?.message ||
+            "Registration failed. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: false,
+            progress: undefined,
+            theme: "light",
+          }
+        );
+      } finally {
         setLoading(false);
-        alert(JSON.stringify(values, null, 2));
-      }, 2000);
-      Navigate("/signin");
+      }
     },
   });
 
@@ -92,16 +123,24 @@ export default function SignUpForm() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <Label>First Name</Label>
-              <Input {...formik.getFieldProps("fname")} placeholder="Wali" />
-              {formik.touched.fname && formik.errors.fname && (
-                <p className="text-red-500 text-sm">{formik.errors.fname}</p>
+              <Input
+                {...formik.getFieldProps("firstName")}
+                placeholder="Wali"
+              />
+              {formik.touched.firstName && formik.errors.firstName && (
+                <p className="text-red-500 text-sm">
+                  {formik.errors.firstName}
+                </p>
               )}
             </div>
             <div>
               <Label>Last Name</Label>
-              <Input {...formik.getFieldProps("lname")} placeholder="Ahmad" />
-              {formik.touched.lname && formik.errors.lname && (
-                <p className="text-red-500 text-sm">{formik.errors.lname}</p>
+              <Input
+                {...formik.getFieldProps("lastName")}
+                placeholder="Ahmad"
+              />
+              {formik.touched.lastName && formik.errors.lastName && (
+                <p className="text-red-500 text-sm">{formik.errors.lastName}</p>
               )}
             </div>
           </div>
@@ -121,11 +160,11 @@ export default function SignUpForm() {
               <Label>Enter D.O.B</Label>
               <div className="relative w-full flatpickr-wrapper">
                 <Flatpickr
-                  value={formik.values.dateOfBirth}
+                  value={formik.values.dob}
                   onChange={(selectedDates) => {
                     if (selectedDates.length > 0) {
                       formik.setFieldValue(
-                        "dateOfBirth",
+                        "dob",
                         selectedDates[0].toISOString().split("T")[0]
                       );
                     }
@@ -138,10 +177,8 @@ export default function SignUpForm() {
                   <CalenderIcon className="size-6" />
                 </span>
               </div>
-              {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
-                <p className="text-red-500 text-sm">
-                  {formik.errors.dateOfBirth}
-                </p>
+              {formik.touched.dob && formik.errors.dob && (
+                <p className="text-red-500 text-sm">{formik.errors.dob}</p>
               )}
             </div>
           </div>
@@ -215,7 +252,7 @@ export default function SignUpForm() {
                 )}
               </span>
             </div>
-            {formik.touched.password && formik.errors.confirmPassword ? (
+            {formik.touched.confirmPassword && formik.errors.confirmPassword ? (
               <p className="text-error-500 text-sm">
                 {formik.errors.confirmPassword}
               </p>

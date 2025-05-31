@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 import {
-  ResultIcon,
   ElectionIcon,
   ChevronDownIcon,
   GridIcon,
@@ -31,11 +30,6 @@ const navItems: NavItem[] = [
     icon: <ElectionIcon />,
     name: "My Elections",
     path: "/myElections",
-  },
-  {
-    icon: <ResultIcon />,
-    name: "Election Results",
-    path: "/electionResults",
   },
   {
     icon: <UserCircleIcon />,

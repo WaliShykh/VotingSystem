@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
@@ -10,9 +10,14 @@ import Button from "../ui/button/Button";
 import { toast } from "react-toastify";
 
 export default function SignInForm() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Get the redirect path from location state or default to home
+  const from = (location.state as any)?.from?.pathname || "/";
 
   const formik = useFormik({
     initialValues: {
@@ -23,25 +28,43 @@ export default function SignInForm() {
       email: Yup.string()
         .email("Invalid email address")
         .required("Email is required"),
+      password: Yup.string().required("Password is required"),
     }),
     validateOnChange: true,
     validateOnBlur: true,
-    onSubmit: (values) => {
-      toast.success("Log in successful!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: false,
-        progress: undefined,
-        theme: "light",
-      });
-      setLoading(true);
-      setTimeout(() => {
+    onSubmit: async () => {
+      try {
+        setLoading(true);
+        // const response = await authAPI.login(values.email, values.password);
+        toast.success("Login successful!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+          theme: "light",
+        });
+        // Redirect to the attempted page or home
+        navigate(from, { replace: true });
+      } catch (error: any) {
+        toast.error(
+          error.response?.data?.message || "Login failed. Please try again.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: false,
+            progress: undefined,
+            theme: "light",
+          }
+        );
+      } finally {
         setLoading(false);
-        alert(JSON.stringify(values, null, 2));
-      }, 2000);
+      }
     },
   });
 

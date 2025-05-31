@@ -7,10 +7,10 @@ import UserProfiles from "./pages/UserProfiles";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import MyElections from "./pages/MyElections";
-import ElectionResults from "./pages/ElectionResults";
 import ViewResults from "./pages/ViewResults";
 import Home from "./pages/Dashboard/Home";
 import CastVote from "./pages/CastVote";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 export default function App() {
   return (
@@ -18,13 +18,18 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          <Route element={<AppLayout />}>
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index path="/" element={<Home />} />
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/myElections" element={<MyElections />} />
-            <Route path="/electionResults" element={<ElectionResults />} />
-            <Route path="/viewResults" element={<ViewResults />} />
-            <Route path="/castVote" element={<CastVote />} />
+            <Route path="/viewResults/:id" element={<ViewResults />} />
+            <Route path="/castVote/:id" element={<CastVote />} />
           </Route>
 
           <Route path="/signin" element={<SignIn />} />
