@@ -89,7 +89,11 @@ export default function MyElections() {
   }
 
   if (!votingHistory.length) {
-    return <div>No voting history available</div>;
+    return (
+      <div className="text-light dark:text-gray-400">
+        No voting history available
+      </div>
+    );
   }
 
   return (

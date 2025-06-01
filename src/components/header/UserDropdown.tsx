@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router";
@@ -6,9 +6,39 @@ import UserImage from "../../assets/images/user/owner.jpg";
 import { authAPI } from "../../services/api";
 import { toast } from "react-toastify";
 
+interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:5174/api/me/", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        console.log("API Response:", data);
+        setUser(data);
+        console.log("User state after update:", user);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -56,7 +86,9 @@ export default function UserDropdown() {
           <img src={UserImage} alt="User" />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Wali</span>
+        <span className="block mr-1 font-medium text-theme-sm">
+          {user?.firstName}
+        </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -84,10 +116,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Wali Ahmad
+            {user?.firstName} {user?.lastName}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            walishykh@gmail.com
+            {user?.email}
           </span>
         </div>
 
